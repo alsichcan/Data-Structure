@@ -1,0 +1,266 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
+public class BigInteger{
+    public static final String QUIT_COMMAND = "quit";
+    public static final String MSG_INVALID_INPUT = "입력이 잘못되었습니다.";
+    // implement this
+    public static final Pattern EXPRESSION_PATTERN = Pattern.compile("");
+
+    private int topIndex;
+    private String sign = "+";
+
+    public byte[] digit_list;
+
+    public BigInteger(int i)
+    {
+        this.digit_list = new byte[i];
+        for (int cnt = 0 ; cnt < i ; cnt++){
+            this.digit_list[cnt] = 0;
+        } //end for
+    } //end BigInteger
+
+    public BigInteger(String s)
+    {
+        this.digit_list = new byte[100];
+
+        // set the sign of the BigInteger at sign and remove sign from it
+        if (s.substring(0, 1).equals("+") || s.substring(0, 1).equals("-")) {
+            this.sign = s.substring(0, 1);
+            s = s.substring(1);
+        }//end if
+        else {this.sign = "+";}
+
+        // set the value
+        for (int i = 0; i < 100 - s.length(); i++){
+            this.digit_list[i] = 0;
+        } //end for
+
+        for (int i = 0 ; i < s.length() ; i++){
+            if (i != s.length()){
+                this.digit_list[100-s.length()+i] = Byte.parseByte(s.substring(i, i+1));
+            } //end if
+            else{
+                this.digit_list[100] = Byte.parseByte(s.substring(s.length()-1));
+            } //end else
+        } // end for
+    } // end BigInteger(String s)
+
+    public void sign(){
+        for (int i = 0 ; i < 100 ; i++){
+            if (this.sign.equals("-")){
+                this.digit_list[i] = (byte) -(this.digit_list[i]);
+            } //end if
+        } // end for
+    } //end sign()
+
+    public void digit_update(BigInteger big){
+
+        for (int i=0; i < big.digit_list.length; i++){
+            if (big.digit_list[i] != 0){
+                if(big.digit_list[i] < 0) {
+                    big.sign = "-";
+                    for (int j = i; j < 101; j++) {
+                        big.digit_list[j] = (byte) -big.digit_list[j];
+                    }//end for
+                    topIndex = i;
+                    break;
+                } //end if
+                break;
+            } //end if
+        } //end for
+        for (int j= big.digit_list.length - 1 ; j >= topIndex; j--){
+            if (big.digit_list[j] >= 10){
+                big.digit_list[j-1] += 1;
+                big.digit_list[j] -= 10;
+            } // end if
+            else{
+                if (big.digit_list[j] < 0){
+                    big.digit_list[j-1] -= 1;
+                    big.digit_list[j] += 10;
+                } //end if
+            }  //end else
+        } //end for
+    }//end digit_update
+
+    public BigInteger add(BigInteger big) {
+        BigInteger Result = new BigInteger(101);
+        this.sign();
+        big.sign();
+        for (int i = 0 ; i < 100 ; i++ ){
+            Result.digit_list[i+1] = (byte) (this.digit_list[i] + big.digit_list[i]);
+        } //end for
+        digit_update(Result);
+        return Result;
+    }
+
+    public BigInteger subtract(BigInteger big) {
+        BigInteger Result = new BigInteger(101);
+        this.sign();
+        big.sign();
+        for (int i = 0 ; i < 100 ; i++){
+            Result.digit_list[i+1] = (byte) (this.digit_list[i] - big.digit_list[i]);
+        } //end for
+        digit_update(Result);
+        return Result;
+    }
+
+    public BigInteger multiply(BigInteger big)    {
+        BigInteger Result = new BigInteger(200);
+        if (this.sign.equals(big.sign)){
+            Result.sign = "+";
+        } //end if
+        else {Result.sign = "-";} //end else
+
+        for (int i = 99 ; i >= 0 ; i--){
+            for (int j = 99 ; j >= 0 ; j--){
+                Result.digit_list[i+j+1] += (byte) ((this.digit_list[i] * big.digit_list[j]) % 10);
+                Result.digit_list[i+j] += (byte) ((this.digit_list[i] * big.digit_list[j]) / 10);
+            } //end for
+            for (int cnt = 199 ; cnt >0 ; cnt--){
+                Result.digit_list[cnt-1] += (byte) (Result.digit_list[cnt] / 10);
+                Result.digit_list[cnt] = (byte) (Result.digit_list[cnt] % 10);
+            } //end for
+        } //end for
+
+        return Result;
+    }
+
+    @Override
+    public String toString()
+    {
+        int count = 0;
+        for (int i = 0 ; i < digit_list.length ; i++){
+            if (digit_list[i] != 0){
+                topIndex = i;
+                count += 1;
+                break;
+            } //end if
+        } //end for
+        if (count == 0){
+            return "0";
+        }
+        else{
+            StringBuilder sb = new StringBuilder("");
+            if (sign.equals("-")){
+                sb.append(sign);
+            } //end if
+
+            for (int j = topIndex ; j < digit_list.length ; j++){
+                sb.append(digit_list[j]);
+            } //end for
+            return sb.toString();
+        }//end else
+    } //end toString()
+
+    static BigInteger evaluate(String input) throws IllegalArgumentException
+    {
+        String line = eraseSpace(input);
+        BigInteger num1 = new BigInteger(line.substring(0, Integer.parseInt(inputAnalyze(line)[1].toString()))); // Declare number before operator as num1
+        BigInteger num2 = new BigInteger(line.substring(Integer.parseInt(inputAnalyze(line)[1].toString())+1)); // Declare number after operator as num2
+
+        // Do the Calculation according to operator
+        if (inputAnalyze(line)[0].toString().equals("*")) {
+            return num1.multiply(num2);
+        }
+        else{
+            if (inputAnalyze(line)[0].toString().equals("+")){
+                return num1.add(num2);
+            } //end if
+            else{
+                return num1.subtract(num2);
+            }
+        } //end switch
+    } //end evaluate
+
+
+    public static String eraseSpace(String input){
+        // Method to erase the spaces in the Input
+        return input.replaceAll("\\p{Z}","");
+    } // end eraseSpace
+
+    public static Object[] inputAnalyze(String line) {
+        // Analyze the space erased Input and return analyzed_data = [operator, operator_index]
+        // Data Types to return
+        String operator;
+        int operator_index;
+        Object[] analyzed_data = new Object[2];
+
+        // Convert String type Input --> String[] type
+        String[] line_array = new String[line.length()];
+        for (int i = 0; i < line.length(); i++) {
+            line_array[i] = line.substring(i, i + 1);
+        } // end for
+
+        // Analyze Input
+        if (line.contains("*")) {
+            operator = "*";
+            operator_index = line.indexOf("*");
+            analyzed_data[0] = operator;
+            analyzed_data[1] = operator_index;
+        } //end if
+
+        else {
+            for (int i = 1; i < line.length(); i++) {
+                if (line_array[i].equals("+") || line_array[i].equals("-")) {
+                    operator = line_array[i];
+                    operator_index = i;
+                    analyzed_data[0] = operator;
+                    analyzed_data[1] = operator_index;
+                    break;
+                } //end if
+            } //end for
+        }//end else
+
+        return analyzed_data;
+    } //end inputAnalyze
+
+    public static void main(String[] args) throws Exception
+    {
+        try (InputStreamReader isr = new InputStreamReader(System.in))
+        {
+            try (BufferedReader reader = new BufferedReader(isr))
+            {
+                boolean done = false;
+                while (!done)
+                {
+                    String input = reader.readLine();
+
+                    try
+                    {
+                        done = processInput(input);
+                    }
+                    catch (IllegalArgumentException e)
+                    {
+                        System.err.println(MSG_INVALID_INPUT);
+                    }
+                }
+            }
+        }
+    }
+
+    static boolean processInput(String input) throws IllegalArgumentException
+    {
+        boolean quit = isQuitCmd(input);
+
+        if (quit)
+        {
+            return true;
+        }
+        else
+        {
+            BigInteger result = evaluate(input);
+            System.out.println(result.toString());
+
+            return false;
+        }
+    }
+
+    static boolean isQuitCmd(String input)
+    {
+        return input.equalsIgnoreCase(QUIT_COMMAND);
+    }
+}
