@@ -1,2 +1,2 @@
-# DataStructure
-Seoul National University Computer Science Major by Professor Moon Byeong Ro in 2018-1
+# Data Structure
+SNU CSE 4190.103A Programming Practice by Professor Byeong Ro Moon in 2018 Spring Semester
